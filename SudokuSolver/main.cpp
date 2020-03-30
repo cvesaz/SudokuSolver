@@ -6,7 +6,7 @@
 //  Copyright © 2019 Christian Vessaz. All rights reserved.
 //
 
-#if 1
+#if 1 // Test Grid class
 
 #include <iostream>
 #include "grid.hpp"

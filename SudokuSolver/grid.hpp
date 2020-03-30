@@ -27,30 +27,47 @@ typedef std::map<INDEX,DIGIT> FILLED_CELLS;
 class Grid {
   
 public:
-  enum {N = 9, NN = 81}; // Grid size
+  // Grid size
+  enum {N = 9, NN = 81};
   
 public:
+  // Constructor
   Grid(const FILLED_CELLS& input);
+  // Print grid to terminal
   void print();
+  // Clean grid
   bool clean();
+  // Check if Grid is valid
   bool check();
+  // Count remaing cell to solve
   int  countRemaining();
+  // Solve unique value per lines, columns, squares
   void unique();
+  // Solve linked cells per lines, columns, squares
   void linkedCells();
   
 private:
+  // Helper to get the line indices
   INDICES getLineIndices(const INDEX& index);
+  // Helper to get the column indices
   INDICES getColumnIndices(const INDEX& index);
+  // Helper to get the square indices
   INDICES getSquareIndices(const INDEX& index);
+  // Clean value from indices in neighboring cell of current line, column and square
   bool clean(const INDEX& index, const DIGIT& value);
+  // Check if value is present in neighboring indices
   bool check(const INDEX& index, const DIGIT& value, const INDICES& indices);
+  // Solve unique value in neighboring indices
   void unique(const INDEX& index, const DIGIT& value, const INDICES& indices);
+  // Solve linked cells in neighboring indices
   void linkedCells(const INDEX& index, const INDICES& indices);
   
 public:
+  // Data of cells: lift of all remaining possible digits
   DIGITS data[NN];
 };
 
+// Grid example easy
 static FILLED_CELLS easy = {
   {1, 6}, {2, 8}, {4, 2}, {5, 7}, {6, 9}, {8, 1},
   {12, 9}, {13, 1}, {17, 8},
@@ -63,6 +80,7 @@ static FILLED_CELLS easy = {
   {72, 6}, {74, 5}, {78, 4}, {80, 7}
 };
 
+// Grid example medium
 static FILLED_CELLS medium = {
   {6, 4}, {7, 7},
   {9, 5}, {12, 4}, {17, 2},
@@ -75,6 +93,7 @@ static FILLED_CELLS medium = {
   {72, 8}, {73, 7}, {76, 2}, {80, 5}
 };
 
+// Grid example hard
 static FILLED_CELLS hard = {
   {1, 4}, {2, 9}, {8, 5},
   {12, 8}, {13, 3}, {14, 1},
@@ -87,6 +106,7 @@ static FILLED_CELLS hard = {
   {72, 6}, {75, 9}
 };
 
+// Grid example expert
 static FILLED_CELLS expert = {
   {2, 6}, {4, 4}, {7, 3},
   {10, 3}, {15, 6}, {17, 9},

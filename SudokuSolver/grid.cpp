@@ -9,6 +9,7 @@
 #include "grid.hpp"
 
 // Constructor
+// input: list of filled cells in the grid
 Grid::Grid(const FILLED_CELLS& input) {
   std::cout << "Initialization: " << std::endl;
   // Initialize empty grid
@@ -86,7 +87,8 @@ int Grid::countRemaining() {
   return NN-count;
 };
 
-// Solve unique value
+// Solve unique value per lines, columns, squares
+// REMARK will be obsolete and performed by linkedCells()
 void Grid::unique() {
   std::cout << "CheckUnique: " << std::endl;
   bool found(true);
@@ -118,7 +120,7 @@ void Grid::unique() {
   }
 };
 
-// Solve linked cells
+// Solve linked cells per lines, columns, squares
 void Grid::linkedCells() {
   std::cout << "CheckLinkedCells: " << std::endl;
   bool found(true);
@@ -136,6 +138,8 @@ void Grid::linkedCells() {
 };
 
 // Helper to get the line indices
+// index: Current cell index
+// return: List of all cell indices on the current line
 INDICES Grid::getLineIndices(const INDEX& index) {
   INDICES line = {0,1,2,3,4,5,6,7,8};
   int shift = index / 9;
@@ -146,6 +150,8 @@ INDICES Grid::getLineIndices(const INDEX& index) {
 };
 
 // Helper to get the column indices
+// index: Current cell index
+// return: List of all cell indices on the current column
 INDICES Grid::getColumnIndices(const INDEX& index) {
   INDICES column = {0,9,18,27,36,45,54,63,72};
   auto shift = index % 9;
@@ -156,6 +162,8 @@ INDICES Grid::getColumnIndices(const INDEX& index) {
 };
 
 // Helper to get the square indices
+// index: Current cell index
+// return: List of all cell indices on the current square
 INDICES Grid::getSquareIndices(const INDEX& index) {
   INDICES square = {0,1,2,9,10,11,18,19,20};
   auto shift = 3*((index % 9)/3) + 27*((index / 9)/3);
@@ -166,6 +174,9 @@ INDICES Grid::getSquareIndices(const INDEX& index) {
 };
 
 // Clean value from indices in neighboring cell of current line, column and square
+// index: Current cell index
+// value: Digit to be removed from cells data
+// return: boolean success
 bool Grid::clean(const INDEX& index, const DIGIT& value) {
   bool success(true);
   auto lineIndices = getLineIndices(index);
@@ -196,6 +207,10 @@ bool Grid::clean(const INDEX& index, const DIGIT& value) {
 };
 
 // Check if value is present in neighboring indices
+// index: Current cell index
+// value: Digit to check
+// indices: Indices to be checked, including current cell
+// return: boolean success
 bool Grid::check(const INDEX& index, const DIGIT& value, const INDICES& indices) {
   bool success(true);
   assert(data[index].size()==1);
@@ -209,7 +224,10 @@ bool Grid::check(const INDEX& index, const DIGIT& value, const INDICES& indices)
   return success;
 };
 
-// Solve unique value in neighboring indices and clean
+// Solve unique value in neighboring indices
+// index: Current cell index
+// value: Digit to check if unique in neighboring indices, if so clean()
+// indices: Indices of neighboring cell, including current cell
 void Grid::unique(const INDEX& index, const DIGIT& value, const INDICES& indices) {
   assert(data[index].size()>1);
   for (const auto& ind : indices) {
@@ -224,7 +242,9 @@ void Grid::unique(const INDEX& index, const DIGIT& value, const INDICES& indices
   assert(success);
 };
 
-// TODO Solve linked cells in neighboring indices and clean
+// TODO Solve linked cells in neighboring indices
+// index: Current cell index
+// indices: Indices of neighboring cell, including current cell
 void Grid::linkedCells(const INDEX& index, const INDICES& indices) {
   INDICES cells;
   cells.reserve(N);

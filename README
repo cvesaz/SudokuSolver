@@ -1,0 +1,3 @@
+//  SudokuSolver
+The aim of this project is to solve Sudoku game without brut force recursion.
+The solving method implement follow the behavior of a human person in order to give clue on how to solve when you are blocked.
