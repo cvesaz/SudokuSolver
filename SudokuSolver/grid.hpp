@@ -53,6 +53,10 @@ private:
   INDICES getColumnIndices(const INDEX& index);
   // Helper to get the square indices
   INDICES getSquareIndices(const INDEX& index);
+  // Helper to get factorial of n
+  int factorial(const int& n);
+  // Helper to get indices permutations
+  std::vector<std::vector<int>> getIndicesPermSizeKinN(const int& k, const int& n);
   // Clean value from indices in neighboring cell of current line, column and square
   bool clean(const INDEX& index, const DIGIT& value);
   // Check if value is present in neighboring indices

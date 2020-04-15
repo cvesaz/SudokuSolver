@@ -173,6 +173,47 @@ INDICES Grid::getSquareIndices(const INDEX& index) {
   return square;
 };
 
+// Helper to get factorial of n
+// n: input number
+// return: n!
+int factorial(const int& n) {
+  return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
+}
+
+// Helper to get indices permutations
+// k: size of echantillon
+// n: size of population
+// return: list of all k indices permutations out of n indices
+std::vector<std::vector<int>> getIndicesPermSizeKinN(const int& k, const int& n) {
+  std::vector<std::vector<int>> permList;
+  if (k>n || k<1) return permList;
+  int permCount(0);
+  permList.resize(factorial(n)/factorial(n-k));
+  std::vector<int> perm(k);
+  for (int i = 0; i < k; ++i) perm[i] = i;
+  permList[permCount] = perm;
+  ++permCount;
+  while (perm[0]<n-k) {
+    for (int i = perm[k-1]; i < n-1; ++i) {
+      perm[k-1] += 1;
+      permList[permCount] = perm;
+      ++permCount;
+    }
+    for (int i = 1; i <= k; ++i) {
+      if (perm[k-i]<(n-i)) {
+        perm[k-i] += 1;
+        for (int j = k-i+1; j<k; ++j) {
+          perm[j] = perm[j-1]+1;
+        }
+        permList[permCount] = perm;
+        ++permCount;
+        break;
+      }
+    }
+  }
+  return permList;
+}
+
 // Clean value from indices in neighboring cell of current line, column and square
 // index: Current cell index
 // value: Digit to be removed from cells data
