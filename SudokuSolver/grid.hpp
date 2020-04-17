@@ -21,30 +21,26 @@ typedef int INDEX;
 typedef std::vector<INDEX> INDICES;
 typedef std::set<INDEX> SET_INDICES;
 typedef int DIGIT;
-typedef std::set<DIGIT> DIGITS;
+typedef std::set<DIGIT> SET_DIGITS;
 typedef std::map<INDEX,DIGIT> FILLED_CELLS;
 
 class Grid {
   
-public:
+private:
   // Grid size
   enum {N = 9, NN = 81};
+  // Data of cells: lift of all remaining possible digits
+  SET_DIGITS data[NN];
+  // Remaing cell indices
+  SET_INDICES remainingCells;
+  // Solved cell indices;
+  SET_INDICES solvedCells;
+  // Is valid
+  bool isValid;
   
 public:
   // Constructor
   Grid(const FILLED_CELLS& input);
-  // Print grid to terminal
-  void print();
-  // Clean grid
-  bool clean();
-  // Check if Grid is valid
-  bool check();
-  // Count remaing cell to solve
-  int  countRemaining();
-  // Solve unique value per lines, columns, squares
-  void unique();
-  // Solve linked cells per lines, columns, squares
-  void linkedCells();
   
 private:
   // Helper to get the line indices
@@ -61,14 +57,29 @@ private:
   bool clean(const INDEX& index, const DIGIT& value);
   // Check if value is present in neighboring indices
   bool check(const INDEX& index, const DIGIT& value, const INDICES& indices);
+  bool check(const INDEX& index, const DIGIT& value);
   // Solve unique value in neighboring indices
   void unique(const INDEX& index, const DIGIT& value, const INDICES& indices);
   // Solve linked cells in neighboring indices
   void linkedCells(const INDEX& index, const INDICES& indices);
   
 public:
-  // Data of cells: lift of all remaining possible digits
-  DIGITS data[NN];
+  // Print grid to terminal
+  void print();
+  // Clean grid
+  bool clean();
+  // Check if Grid is valid
+  bool check();
+  // Count remaing cell to solve
+  int  countRemaining();
+  // Solve unique value per lines, columns, squares
+  void unique();
+  // Solve linked cells per lines, columns, squares
+  void linkedCells();
+  // Solve Human Style
+  void solveHumanStyle();
+  // Solve Brut Force
+  void solveBrutForce();
 };
 
 // Grid example easy

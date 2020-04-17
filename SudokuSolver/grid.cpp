@@ -13,129 +13,29 @@
 Grid::Grid(const FILLED_CELLS& input) {
   std::cout << "Initialization: " << std::endl;
   // Initialize empty grid
-  DIGITS emptyCell = {1,2,3,4,5,6,7,8,9};
+  SET_DIGITS emptyCell = {1,2,3,4,5,6,7,8,9};
   for (INDEX i = 0; i<NN; ++i) {
     data[i] = emptyCell;
+    remainingCells.insert(i);
   }
   // Update input
   for (const auto& cell : input) {
     auto index = cell.first;
     auto value = cell.second;
     data[index] = {value};
-  }
-};
-
-// Print grid to terminal
-void Grid::print() {
-  for (INDEX i = 0; i<NN; ++i) {
-    if (i%9 == 0 && i!=0) std::cout << std::endl;
-    if (data[i].size()==1) {
-      std::cout << *data[i].begin();
-    }
-    else {
-      std::cout << " ";
-    }
-    std::cout << " ";
-    
-  }
-  std::cout << std::endl << "Remaining cells: " << countRemaining() << std::endl;
-  check();
-  std::cout << std::endl;
-};
-
-// Clean grid
-bool Grid::clean() {
-  std::cout << "Clean: " << std::endl;
-  bool success(true);
-  FILLED_CELLS cells;
-  for (INDEX i = 0; i<NN; ++i) {
-    if (data[i].size()==1) cells.insert({i,*data[i].begin()});
-  }
-  for (const auto& cell : cells) {
-    success = std::min(success, clean(cell.first, cell.second));
-  }
-  return success;
-};
-
-// Check if Grid is valid
-bool Grid::check() {
-  std::cout << "Check: ";
-  bool success(true);
-  for (INDEX i = 0; i<NN; ++i) {
-    if (data[i].size()!=1) continue;
-    for (const auto& value : data[i]) {
-      success = check(i,value,getLineIndices(i));
-      if (success==false) break;
-      success = check(i,value,getColumnIndices(i));
-      if (success==false) break;
-      success = check(i,value,getSquareIndices(i));
-      if (success==false) break;
-    }
-    if (success==false) break;
-  }
-  std::cout << (success ? "true" : "false") << std::endl;
-  assert(success);
-  return success;
-};
-
-// Count remaing cell to solve
-int Grid::countRemaining() {
-  int count(0);
-  for (INDEX i = 0; i<NN; ++i) {
-    if (data[i].size()==1) ++count;
-  }
-  return NN-count;
-};
-
-// Solve unique value per lines, columns, squares
-// REMARK will be obsolete and performed by linkedCells()
-void Grid::unique() {
-  std::cout << "CheckUnique: " << std::endl;
-  bool found(true);
-  while (found) {
-    found = false;
-    for (INDEX i = 0; i<NN; ++i) {
-      if (data[i].size()==1) continue;
-      for (const auto& value : data[i]) {
-        unique(i,value,getLineIndices(i));
-        if (data[i].size()==1) {
-          //std::cout << "Found unique in line: " << i << " / " << *data[i].begin() << std::endl;
-          break;
-        }
-        unique(i,value,getColumnIndices(i));
-        if (data[i].size()==1) {
-          //std::cout << "Found unique in column: " << i << " / " << *data[i].begin() << std::endl;
-          break;
-        }
-        unique(i,value,getSquareIndices(i));
-        if (data[i].size()==1) {
-          //std::cout << "Found unique in square: " << i << " / " << *data[i].begin() << std::endl;
-          break;
-        }
-      }
-      if (data[i].size()==1) {
-        found = true;
-      }
+    auto it = remainingCells.find(index);
+    if (it!=remainingCells.end()) {
+      remainingCells.erase(it);
+      solvedCells.insert(index);
     }
   }
-};
-
-// Solve linked cells per lines, columns, squares
-void Grid::linkedCells() {
-  std::cout << "CheckLinkedCells: " << std::endl;
-  bool found(true);
-  while (found) {
-    found = false;
-    auto nr = countRemaining();
-    for (INDEX i = 0; i<NN; ++i) {
-      if (data[i].size()==1) continue;
-      linkedCells(i,getLineIndices(i));
-      linkedCells(i,getColumnIndices(i));
-      linkedCells(i,getSquareIndices(i));
-    }
-    if (nr-countRemaining()>0) found = true;
+  // Clean data
+  isValid = check();
+  if (isValid) {
+    isValid = clean();
+    print();
   }
-};
+}
 
 // Helper to get the line indices
 // index: Current cell index
@@ -147,7 +47,7 @@ INDICES Grid::getLineIndices(const INDEX& index) {
     ind += 9*shift;
   }
   return line;
-};
+}
 
 // Helper to get the column indices
 // index: Current cell index
@@ -159,7 +59,7 @@ INDICES Grid::getColumnIndices(const INDEX& index) {
     ind += shift;
   }
   return column;
-};
+}
 
 // Helper to get the square indices
 // index: Current cell index
@@ -171,7 +71,7 @@ INDICES Grid::getSquareIndices(const INDEX& index) {
     ind += shift;
   }
   return square;
-};
+}
 
 // Helper to get factorial of n
 // n: input number
@@ -236,16 +136,11 @@ bool Grid::clean(const INDEX& index, const DIGIT& value) {
       }
       else {
         data[ind].erase(it);
-        if (data[ind].size()==1) {
-          const DIGIT v = *data[ind].begin();
-          clean(ind, v);
-          //std::cout << "Last digit in cell: " << ind << " / " << v << std::endl;
-        }
       }
     }
   }
   return success;
-};
+}
 
 // Check if value is present in neighboring indices
 // index: Current cell index
@@ -254,7 +149,6 @@ bool Grid::clean(const INDEX& index, const DIGIT& value) {
 // return: boolean success
 bool Grid::check(const INDEX& index, const DIGIT& value, const INDICES& indices) {
   bool success(true);
-  assert(data[index].size()==1);
   for (const auto& ind : indices) {
     if (ind==index || data[ind].size()>1) continue;
     if (*data[ind].begin()==value) {
@@ -263,7 +157,15 @@ bool Grid::check(const INDEX& index, const DIGIT& value, const INDICES& indices)
     }
   }
   return success;
-};
+}
+bool Grid::check(const INDEX& index, const DIGIT& value) {
+  auto success = check(index,value,getLineIndices(index));
+  if (!success) return false;
+  success = check(index,value,getColumnIndices(index));
+  if (!success) return false;
+  success = check(index,value,getSquareIndices(index));
+  return success;
+}
 
 // Solve unique value in neighboring indices
 // index: Current cell index
@@ -279,9 +181,11 @@ void Grid::unique(const INDEX& index, const DIGIT& value, const INDICES& indices
     }
   }
   data[index] = {value};
+  auto it = remainingCells.find(index);
+  if (it!=remainingCells.end()) remainingCells.erase(it);
   auto success = clean(index, value);
   assert(success);
-};
+}
 
 // TODO Solve linked cells in neighboring indices
 // index: Current cell index
@@ -307,4 +211,130 @@ void Grid::linkedCells(const INDEX& index, const INDICES& indices) {
   for (INDEX nl=1; nl<nr-1; ++nl) {
     // TODO
   }
+}
+
+// Print grid to terminal
+void Grid::print() {
+  for (INDEX i = 0; i<NN; ++i) {
+    if (i%9 == 0 && i!=0) std::cout << std::endl;
+    if (data[i].size()==1) {
+      std::cout << *data[i].begin();
+    }
+    else {
+      std::cout << " ";
+    }
+    std::cout << " ";
+    
+  }
+  std::cout << std::endl << "Remaining cells: " << countRemaining() << std::endl;
+}
+
+// Clean grid
+bool Grid::clean() {
+  std::cout << "Clean: " << std::endl;
+  bool success(true);
+  for (const auto& cell : solvedCells) {
+    assert(data[cell].size()==1);
+    auto value = *data[cell].begin();
+    success = std::min(success, clean(cell, value));
+  }
+  return success;
+}
+
+// Check if Grid is valid
+bool Grid::check() {
+  std::cout << "Check: ";
+  bool success(true);
+  for (const auto& cell : solvedCells) {
+    assert(data[cell].size()==1);
+    auto value = *data[cell].begin();
+    success = check(cell,value);
+    if (success==false) break;
+  }
+  std::cout << (success ? "true" : "false") << std::endl;
+  return success;
+}
+
+// Count remaing cell to solve
+int Grid::countRemaining() {
+  return (int)remainingCells.size();
+}
+
+// Solve unique value per lines, columns, squares
+// REMARK will be obsolete and performed by linkedCells()
+void Grid::unique() {
+  std::cout << "CheckUnique: " << std::endl;
+  bool found(true);
+  while (found) {
+    found = false;
+    for (INDEX i = 0; i<NN; ++i) {
+      if (data[i].size()==1) continue;
+      for (const auto& value : data[i]) {
+        unique(i,value,getLineIndices(i));
+        if (data[i].size()==1) {
+          //std::cout << "Found unique in line: " << i << " / " << *data[i].begin() << std::endl;
+          break;
+        }
+        unique(i,value,getColumnIndices(i));
+        if (data[i].size()==1) {
+          //std::cout << "Found unique in column: " << i << " / " << *data[i].begin() << std::endl;
+          break;
+        }
+        unique(i,value,getSquareIndices(i));
+        if (data[i].size()==1) {
+          //std::cout << "Found unique in square: " << i << " / " << *data[i].begin() << std::endl;
+          break;
+        }
+      }
+      if (data[i].size()==1) {
+        found = true;
+      }
+    }
+  }
+}
+
+// Solve linked cells per lines, columns, squares
+void Grid::linkedCells() {
+  std::cout << "CheckLinkedCells: " << std::endl;
+  bool found(true);
+  while (found) {
+    found = false;
+    auto nr = countRemaining();
+    for (INDEX i = 0; i<NN; ++i) {
+      if (data[i].size()==1) continue;
+      linkedCells(i,getLineIndices(i));
+      linkedCells(i,getColumnIndices(i));
+      linkedCells(i,getSquareIndices(i));
+    }
+    if (nr-countRemaining()>0) found = true;
+  }
 };
+
+// Solve Human Style
+void Grid::solveHumanStyle() {
+  if (!isValid) return;
+  while (countRemaining()>1) {
+    unique();
+    linkedCells();
+  }
+}
+
+// Solve Brut Force
+void Grid::solveBrutForce() {
+  if (!isValid) return;
+  for (INDEX cell = 0; cell<NN; ++cell) {
+    if (data[cell].size()>1) {
+      for (DIGIT value = 1; value<=9; ++value) {
+        if (check(cell, value)) {
+          auto cellData = data[cell];
+          data[cell] = {value};
+          solveBrutForce();
+          if (remainingCells.size()==0) return;
+          data[cell] = cellData;
+        }
+      }
+      return;
+    }
+  }
+  remainingCells.clear(); // FIXME force to stop after founding the first solution
+}

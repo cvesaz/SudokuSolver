@@ -7,23 +7,22 @@
 //
 
 #include <iostream>
+#include <chrono>
 #include "grid.hpp"
 
 int main(int argc, const char * argv[]) {
   
   auto grid = Grid(expert); // easy, medium, hard, expert
-  grid.print();
   
-  grid.clean();
-  grid.print();
+  auto start = std::chrono::high_resolution_clock::now();
+  grid.solveBrutForce();
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto solveTime = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   
-  grid.unique();
+  std::cout << "Solution: " << std::endl;
+  grid.check();
   grid.print();
-  
-  grid.linkedCells();
-  grid.print();
-  
-  // TODO add recursive method when multiple option is required
+  std::cout << "Solve time: " << (float)solveTime.count()/1e6 << " [seconds]" << std::endl;
   
   return 0;
 }
