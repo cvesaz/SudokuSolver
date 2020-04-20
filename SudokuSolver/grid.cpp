@@ -29,12 +29,10 @@ Grid::Grid(const FILLED_CELLS& input) {
       solvedCells.insert(index);
     }
   }
-  // Clean data
+  // Check data
+  clean();
   isValid = check();
-  if (isValid) {
-    isValid = clean();
-    print();
-  }
+  if (isValid) print();
 }
 
 // Helper to get the line indices
@@ -117,9 +115,7 @@ std::vector<std::vector<int>> getIndicesPermSizeKinN(const int& k, const int& n)
 // Clean value from indices in neighboring cell of current line, column and square
 // index: Current cell index
 // value: Digit to be removed from cells data
-// return: boolean success
-bool Grid::clean(const INDEX& index, const DIGIT& value) {
-  bool success(true);
+void Grid::clean(const INDEX& index, const DIGIT& value) {
   auto lineIndices = getLineIndices(index);
   auto columnIndices = getColumnIndices(index);
   auto squareIndices = getSquareIndices(index);
@@ -128,43 +124,54 @@ bool Grid::clean(const INDEX& index, const DIGIT& value) {
   indices.insert(columnIndices.begin(), columnIndices.end());
   indices.insert(squareIndices.begin(), squareIndices.end());
   for (const auto& ind : indices) {
-    if (ind==index) continue;
+    if (ind==index || data[ind].size()==1) continue;
     auto it = data[ind].find(value);
     if (it != data[ind].end()) {
-      if (data[ind].size()==1) {
-        success = false;
-      }
-      else {
-        data[ind].erase(it);
-      }
+      data[ind].erase(it);
     }
   }
-  return success;
 }
 
 // Check if value is present in neighboring indices
 // index: Current cell index
 // value: Digit to check
 // indices: Indices to be checked, including current cell
-// return: boolean success
+// return: Boolean success
 bool Grid::check(const INDEX& index, const DIGIT& value, const INDICES& indices) {
-  bool success(true);
   for (const auto& ind : indices) {
     if (ind==index || data[ind].size()>1) continue;
     if (*data[ind].begin()==value) {
-      success = false;
-      break;
+      return false;
     }
   }
-  return success;
+  return true;
 }
+
+// Check if value is present in neighboring indices
+// index: Current cell index
+// value: Digit to check
+// return: Boolean success
 bool Grid::check(const INDEX& index, const DIGIT& value) {
-  auto success = check(index,value,getLineIndices(index));
-  if (!success) return false;
-  success = check(index,value,getColumnIndices(index));
-  if (!success) return false;
-  success = check(index,value,getSquareIndices(index));
-  return success;
+  if (!check(index,value,getLineIndices(index))) return false;
+  if (!check(index,value,getColumnIndices(index))) return false;
+  if (!check(index,value,getSquareIndices(index))) return false;
+  return true;
+}
+
+// Set solved cell
+// index: Current cell index
+// value: Digit to assign
+void Grid::setSolvedCell(const INDEX& index, const DIGIT& value) {
+  data[index] = {value};
+  auto it = remainingCells.find(index);
+  if (it!=remainingCells.end()) {
+    remainingCells.erase(it);
+    solvedCells.insert(index);
+  }
+  else {
+    assert(false);
+  }
+  clean(index, value);
 }
 
 // Solve unique value in neighboring indices
@@ -180,37 +187,14 @@ void Grid::unique(const INDEX& index, const DIGIT& value, const INDICES& indices
       return;
     }
   }
-  data[index] = {value};
-  auto it = remainingCells.find(index);
-  if (it!=remainingCells.end()) remainingCells.erase(it);
-  auto success = clean(index, value);
-  assert(success);
+  setSolvedCell(index, value);
 }
 
 // TODO Solve linked cells in neighboring indices
 // index: Current cell index
 // indices: Indices of neighboring cell, including current cell
 void Grid::linkedCells(const INDEX& index, const INDICES& indices) {
-  INDICES cells;
-  cells.reserve(N);
-  for (const auto& ind : indices) {
-    if (ind!=index && data[ind].size()>1) cells.push_back(ind);
-  }
-  auto nr = cells.size();
   
-  if (nr==1) {
-    assert(false);
-    return;
-  }
-  if (nr==2) {
-    assert(data[cells[0]]==data[cells[1]]);
-    assert(data[cells[0]].size()==2);
-    return;
-  }
-  
-  for (INDEX nl=1; nl<nr-1; ++nl) {
-    // TODO
-  }
 }
 
 // Print grid to terminal
@@ -230,18 +214,14 @@ void Grid::print() {
 }
 
 // Clean grid
-bool Grid::clean() {
-  std::cout << "Clean: " << std::endl;
-  bool success(true);
+void Grid::clean() {
   for (const auto& cell : solvedCells) {
-    assert(data[cell].size()==1);
-    auto value = *data[cell].begin();
-    success = std::min(success, clean(cell, value));
+    clean(cell, *data[cell].begin());
   }
-  return success;
 }
 
 // Check if Grid is valid
+// return: Boolean success
 bool Grid::check() {
   std::cout << "Check: ";
   bool success(true);
@@ -256,66 +236,51 @@ bool Grid::check() {
 }
 
 // Count remaing cell to solve
+// return: Number of remaining cells
 int Grid::countRemaining() {
   return (int)remainingCells.size();
 }
 
+// Solve last value remaining in cell
+void Grid::last() {
+  for (const auto& cell : remainingCells) {
+    if (data[cell].size()==1) {
+      setSolvedCell(cell, *data[cell].begin());
+      return;
+    }
+  }
+}
+
 // Solve unique value per lines, columns, squares
-// REMARK will be obsolete and performed by linkedCells()
 void Grid::unique() {
-  std::cout << "CheckUnique: " << std::endl;
-  bool found(true);
-  while (found) {
-    found = false;
-    for (INDEX i = 0; i<NN; ++i) {
-      if (data[i].size()==1) continue;
-      for (const auto& value : data[i]) {
-        unique(i,value,getLineIndices(i));
-        if (data[i].size()==1) {
-          //std::cout << "Found unique in line: " << i << " / " << *data[i].begin() << std::endl;
-          break;
-        }
-        unique(i,value,getColumnIndices(i));
-        if (data[i].size()==1) {
-          //std::cout << "Found unique in column: " << i << " / " << *data[i].begin() << std::endl;
-          break;
-        }
-        unique(i,value,getSquareIndices(i));
-        if (data[i].size()==1) {
-          //std::cout << "Found unique in square: " << i << " / " << *data[i].begin() << std::endl;
-          break;
-        }
-      }
-      if (data[i].size()==1) {
-        found = true;
-      }
+  for (const auto& cell : remainingCells) {
+    for (const auto& value : data[cell]) {
+      unique(cell,value,getLineIndices(cell));
+      if (data[cell].size()==1) return;
+      unique(cell,value,getColumnIndices(cell));
+      if (data[cell].size()==1) return;
+      unique(cell,value,getSquareIndices(cell));
+      if (data[cell].size()==1) return;
     }
   }
 }
 
 // Solve linked cells per lines, columns, squares
 void Grid::linkedCells() {
-  std::cout << "CheckLinkedCells: " << std::endl;
-  bool found(true);
-  while (found) {
-    found = false;
-    auto nr = countRemaining();
-    for (INDEX i = 0; i<NN; ++i) {
-      if (data[i].size()==1) continue;
-      linkedCells(i,getLineIndices(i));
-      linkedCells(i,getColumnIndices(i));
-      linkedCells(i,getSquareIndices(i));
-    }
-    if (nr-countRemaining()>0) found = true;
-  }
-};
+  
+}
 
 // Solve Human Style
 void Grid::solveHumanStyle() {
   if (!isValid) return;
-  while (countRemaining()>1) {
+  while (countRemaining()>0) {
+    auto nr = countRemaining();
+    last();
+    if (nr-countRemaining()>0) continue;
     unique();
+    if (nr-countRemaining()>0) continue;
     linkedCells();
+    break;
   }
 }
 

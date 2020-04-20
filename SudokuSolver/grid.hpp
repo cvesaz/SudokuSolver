@@ -54,10 +54,13 @@ private:
   // Helper to get indices permutations
   std::vector<std::vector<int>> getIndicesPermSizeKinN(const int& k, const int& n);
   // Clean value from indices in neighboring cell of current line, column and square
-  bool clean(const INDEX& index, const DIGIT& value);
+  void clean(const INDEX& index, const DIGIT& value);
   // Check if value is present in neighboring indices
   bool check(const INDEX& index, const DIGIT& value, const INDICES& indices);
+  // Check if value is present in neighboring indices
   bool check(const INDEX& index, const DIGIT& value);
+  // Set solved cell
+  void setSolvedCell(const INDEX& index, const DIGIT& value);
   // Solve unique value in neighboring indices
   void unique(const INDEX& index, const DIGIT& value, const INDICES& indices);
   // Solve linked cells in neighboring indices
@@ -67,11 +70,13 @@ public:
   // Print grid to terminal
   void print();
   // Clean grid
-  bool clean();
+  void clean();
   // Check if Grid is valid
   bool check();
   // Count remaing cell to solve
   int  countRemaining();
+  // Solve last value remaining in cell
+  void last();
   // Solve unique value per lines, columns, squares
   void unique();
   // Solve linked cells per lines, columns, squares
@@ -84,15 +89,15 @@ public:
 
 // Grid example easy
 static FILLED_CELLS easy = {
-  {1, 6}, {2, 8}, {4, 2}, {5, 7}, {6, 9}, {8, 1},
-  {12, 9}, {13, 1}, {17, 8},
-  {18, 1}, {20, 7}, {23, 3}, {25, 4},
-  {27, 4}, {28, 7}, {30, 2}, {32, 6},
-  {37, 5}, {38, 1}, {39, 3}, {40, 4}, {41, 9}, {42, 7},
-  {46, 2}, {58, 8}, {49, 7}, {51, 3}, {52, 5},
-  {55, 1}, {56, 9}, {58, 6},
-  {64, 3}, {66, 5}, {71, 6},
-  {72, 6}, {74, 5}, {78, 4}, {80, 7}
+  {1, 4}, {5, 7}, {6, 1},
+  {9, 5}, {10, 3}, {13, 9}, {16, 7},
+  {20, 7}, {22, 6}, {24, 9}, {25, 4},
+  {27, 4}, {29, 6}, {31, 8}, {33, 7}, {34, 5}, {35, 1},
+  {37, 1}, {42, 6}, {43, 9},
+  {46, 5}, {47, 3}, {49, 1}, {53, 2},
+  {54, 9}, {55, 6}, {58, 3}, {61, 1},
+  {63, 3}, {64, 7}, {67, 5}, {68, 1},
+  {72, 1}, {75, 2}, {77, 9}, {78, 3}, {79, 6}, {80, 7}
 };
 
 // Grid example medium
