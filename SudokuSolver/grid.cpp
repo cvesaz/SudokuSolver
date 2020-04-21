@@ -7,6 +7,7 @@
 //
 
 #include "grid.hpp"
+#include <algorithm>
 
 // Constructor
 // input: list of filled cells in the grid
@@ -74,7 +75,7 @@ INDICES Grid::getSquareIndices(const INDEX& index) {
 // Helper to get factorial of n
 // n: input number
 // return: n!
-int factorial(const int& n) {
+int Grid::factorial(const int& n) {
   return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
 }
 
@@ -82,11 +83,11 @@ int factorial(const int& n) {
 // k: size of echantillon
 // n: size of population
 // return: list of all k indices permutations out of n indices
-std::vector<std::vector<int>> getIndicesPermSizeKinN(const int& k, const int& n) {
-  std::vector<std::vector<int>> permList;
+std::vector<INDICES> Grid::getIndicesPermSizeKinN(const int& k, const int& n) {
+  std::vector<INDICES> permList;
   if (k>n || k<1) return permList;
   int permCount(0);
-  permList.resize(factorial(n)/factorial(n-k));
+  permList.resize(factorial(n)/(factorial(k)*factorial(n-k)));
   std::vector<int> perm(k);
   for (int i = 0; i < k; ++i) perm[i] = i;
   permList[permCount] = perm;
@@ -130,6 +131,40 @@ void Grid::clean(const INDEX& index, const DIGIT& value) {
       data[ind].erase(it);
     }
   }
+}
+
+// Clean values from indices
+// indices: cell indices
+// value: Digit to be removed from cells data
+// return: Number of removed digits
+int Grid::clean(const INDICES& indices, const DIGIT& value) {
+  int count(0);
+  for (const auto& ind : indices) {
+    auto it = data[ind].find(value);
+    if (it != data[ind].end()) {
+      data[ind].erase(it);
+      ++count;
+    }
+  }
+  return count;
+}
+
+// Clean values from indices
+// indices: cell indices
+// values: Digits to be removed from cells data
+// return: Number of removed digits
+int Grid::clean(const INDICES& indices, const SET_DIGITS& values) {
+  int count(0);
+  for (const auto& ind : indices) {
+    for (const auto& value : values) {
+      auto it = data[ind].find(value);
+      if (it != data[ind].end()) {
+        data[ind].erase(it);
+        ++count;
+      }
+    }
+  }
+  return count;
 }
 
 // Check if value is present in neighboring indices
@@ -178,23 +213,120 @@ void Grid::setSolvedCell(const INDEX& index, const DIGIT& value) {
 // index: Current cell index
 // value: Digit to check if unique in neighboring indices, if so clean()
 // indices: Indices of neighboring cell, including current cell
-void Grid::unique(const INDEX& index, const DIGIT& value, const INDICES& indices) {
+// return: Found a unique value for cell at index
+bool Grid::unique(const INDEX& index, const DIGIT& value, const INDICES& indices) {
   assert(data[index].size()>1);
   for (const auto& ind : indices) {
     if (ind==index || data[ind].size()==1) continue;
     auto it = data[ind].find(value);
     if (it != data[ind].end()) {
-      return;
+      return false;
     }
   }
   setSolvedCell(index, value);
+  return true;
 }
 
-// TODO Solve linked cells in neighboring indices
-// index: Current cell index
+// Solve linked square with neighboring indices
+// squareIndices: Indices of current square
+// indices: Indices of neighboring line or column
+// return: Found a linked cells that need to be cleaned
+bool Grid::linkedSquares(const INDICES& squareIndices, const INDICES& indices) {
+  INDICES remainingSquareIndices;
+  remainingSquareIndices.reserve(N);
+  INDICES remainingOverlapIndices;
+  remainingOverlapIndices.reserve(N);
+  INDICES remainingIndices;
+  remainingIndices.reserve(N);
+  for (const auto& i : squareIndices) {
+    if (data[i].size()==1) continue;
+    if (std::find(indices.begin(), indices.end(),i)!=indices.end()) {
+      remainingOverlapIndices.push_back(i);
+    }
+    else {
+      remainingSquareIndices.push_back(i);
+    }
+  }
+  for (const auto& i : indices) {
+    if (data[i].size()==1) continue;
+    if (std::find(remainingOverlapIndices.begin(), remainingOverlapIndices.end(),i)==remainingOverlapIndices.end()) {
+      remainingIndices.push_back(i);
+    }
+  }
+  SET_DIGITS remainingSquareValues;
+  for (const auto& i : remainingSquareIndices) {
+    for (const auto& v : data[i]) {
+      remainingSquareValues.insert(v);
+    }
+  }
+  SET_DIGITS remainingOverlapValues;
+  for (const auto& i : remainingOverlapIndices) {
+    for (const auto& v : data[i]) {
+      remainingOverlapValues.insert(v);
+    }
+  }
+  SET_DIGITS remainingValues;
+  for (const auto& i : remainingIndices) {
+    for (const auto& v : data[i]) {
+      remainingValues.insert(v);
+    }
+  }
+  for (const auto& v : remainingOverlapValues) {
+    if (remainingSquareValues.count(v) && !remainingValues.count(v)) {
+      clean(remainingSquareIndices, v);
+      return true;
+    }
+    if (!remainingSquareValues.count(v) && remainingValues.count(v)) {
+      clean(remainingIndices, v);
+      return true;
+    }
+  }
+  return false;
+}
+
+// Solve linked cells in neighboring indices
 // indices: Indices of neighboring cell, including current cell
-void Grid::linkedCells(const INDEX& index, const INDICES& indices) {
-  
+// return: Found a linked cells that need to be cleaned
+bool Grid::linkedCells(const INDICES& indices) {
+  INDICES remainingIndices;
+  remainingIndices.reserve(N);
+  for (INDEX i = 0; i < N; ++i) {
+    auto cell = indices[i];
+    if (data[cell].size()>1) remainingIndices.push_back(cell);
+  }
+  auto nr = (int)remainingIndices.size();
+  auto checkLinkedPerm = [&] (INDICES cellPerm, INDICES cellPermCompl) -> bool {
+    SET_DIGITS valuesInCellPerm;
+    for (const auto& i : cellPerm) {
+      for (const auto& v : data[i]) {
+        valuesInCellPerm.insert(v);
+      }
+    }
+    if (cellPerm.size()==valuesInCellPerm.size()) {
+      if (clean(cellPermCompl, valuesInCellPerm)>0) {
+        return true;
+      }
+    }
+    return false;
+  };
+  for (INDEX k = 2; k <= ((nr+1)/2); ++k) {
+    auto perms = getIndicesPermSizeKinN(k, nr);
+    for (auto perm : perms) {
+      INDICES cellPerm;
+      cellPerm.reserve(perm.size());
+      for (const auto& i : perm) {
+        cellPerm.push_back(remainingIndices[i]);
+      }
+      INDICES cellPermCompl;
+      cellPermCompl.reserve(nr-cellPerm.size());
+      for (const auto& ri : remainingIndices) {
+        if (std::count(cellPerm.begin(), cellPerm.end(), ri)==0) cellPermCompl.push_back(ri);
+      }
+      if (checkLinkedPerm(cellPerm, cellPermCompl)) return true;
+      if (checkLinkedPerm(cellPermCompl, cellPerm)) return true;
+    }
+  }
+  return false;
 }
 
 // Print grid to terminal
@@ -242,44 +374,62 @@ int Grid::countRemaining() {
 }
 
 // Solve last value remaining in cell
-void Grid::last() {
-  for (const auto& cell : remainingCells) {
+// return: Found a last value for cell
+bool Grid::last() {
+  for (const auto cell : remainingCells) {
     if (data[cell].size()==1) {
       setSolvedCell(cell, *data[cell].begin());
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 // Solve unique value per lines, columns, squares
-void Grid::unique() {
-  for (const auto& cell : remainingCells) {
-    for (const auto& value : data[cell]) {
-      unique(cell,value,getLineIndices(cell));
-      if (data[cell].size()==1) return;
-      unique(cell,value,getColumnIndices(cell));
-      if (data[cell].size()==1) return;
-      unique(cell,value,getSquareIndices(cell));
-      if (data[cell].size()==1) return;
+// return: Found a unique value for cell at index
+bool Grid::unique() {
+  for (const auto cell : remainingCells) {
+    for (const auto value : data[cell]) {
+      if (unique(cell,value,getLineIndices(cell))) return true;
+      if (unique(cell,value,getColumnIndices(cell))) return true;
+      if (unique(cell,value,getSquareIndices(cell))) return true;
     }
   }
+  return false;
+}
+
+// Solve linked squares
+// return: Found a linked square that need to be cleaned
+// TODO optimize me using loop over lines, columns and cells instead of remainingCells
+bool Grid::linkedSquares() {
+  for (const auto cell : remainingCells) {
+    if (linkedSquares(getSquareIndices(cell),getLineIndices(cell))) return true;
+    if (linkedSquares(getSquareIndices(cell),getColumnIndices(cell))) return true;
+  }
+  return false;
 }
 
 // Solve linked cells per lines, columns, squares
-void Grid::linkedCells() {
-  
+// return: Found a linked cells that need to be cleaned
+// TODO optimize me using loop over lines, columns and cells instead of remainingCells
+bool Grid::linkedCells() {
+  for (const auto cell : remainingCells) {
+    if (linkedCells(getLineIndices(cell))) return true;
+    if (linkedCells(getColumnIndices(cell))) return true;
+    if (linkedCells(getSquareIndices(cell))) return true;
+  }
+  return false;
 }
 
 // Solve Human Style
+// TODO add recursion 
 void Grid::solveHumanStyle() {
   if (!isValid) return;
   while (countRemaining()>0) {
-    auto nr = countRemaining();
-    last();
-    if (nr-countRemaining()>0) continue;
-    unique();
-    if (nr-countRemaining()>0) continue;
-    linkedCells();
+    if (last()) continue;
+    if (unique()) continue;
+    if (linkedSquares()) continue;
+    if (linkedCells()) continue;
     break;
   }
 }
@@ -301,5 +451,5 @@ void Grid::solveBrutForce() {
       return;
     }
   }
-  remainingCells.clear(); // FIXME force to stop after founding the first solution
+  remainingCells.clear(); // REMARK force to stop after founding the first solution
 }

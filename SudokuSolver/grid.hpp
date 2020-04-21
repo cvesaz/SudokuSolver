@@ -21,6 +21,7 @@ typedef int INDEX;
 typedef std::vector<INDEX> INDICES;
 typedef std::set<INDEX> SET_INDICES;
 typedef int DIGIT;
+typedef std::vector<DIGIT> DIGITS;
 typedef std::set<DIGIT> SET_DIGITS;
 typedef std::map<INDEX,DIGIT> FILLED_CELLS;
 
@@ -52,9 +53,13 @@ private:
   // Helper to get factorial of n
   int factorial(const int& n);
   // Helper to get indices permutations
-  std::vector<std::vector<int>> getIndicesPermSizeKinN(const int& k, const int& n);
+  std::vector<INDICES> getIndicesPermSizeKinN(const int& k, const int& n);
   // Clean value from indices in neighboring cell of current line, column and square
   void clean(const INDEX& index, const DIGIT& value);
+  // Clean value from indices
+  int clean(const INDICES& indices, const DIGIT& value);
+  // Clean values from indices
+  int clean(const INDICES& indices, const SET_DIGITS& values);
   // Check if value is present in neighboring indices
   bool check(const INDEX& index, const DIGIT& value, const INDICES& indices);
   // Check if value is present in neighboring indices
@@ -62,9 +67,11 @@ private:
   // Set solved cell
   void setSolvedCell(const INDEX& index, const DIGIT& value);
   // Solve unique value in neighboring indices
-  void unique(const INDEX& index, const DIGIT& value, const INDICES& indices);
+  bool unique(const INDEX& index, const DIGIT& value, const INDICES& indices);
+  // Solve linked squares with neighboring indices
+  bool linkedSquares(const INDICES& squareIndices, const INDICES& indices);
   // Solve linked cells in neighboring indices
-  void linkedCells(const INDEX& index, const INDICES& indices);
+  bool linkedCells(const INDICES& indices);
   
 public:
   // Print grid to terminal
@@ -76,11 +83,13 @@ public:
   // Count remaing cell to solve
   int  countRemaining();
   // Solve last value remaining in cell
-  void last();
+  bool last();
   // Solve unique value per lines, columns, squares
-  void unique();
+  bool unique();
+  // Solve linked squares
+  bool linkedSquares();
   // Solve linked cells per lines, columns, squares
-  void linkedCells();
+  bool linkedCells();
   // Solve Human Style
   void solveHumanStyle();
   // Solve Brut Force
