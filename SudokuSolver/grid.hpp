@@ -42,6 +42,10 @@ private:
 public:
   // Constructor
   Grid(const FILLED_CELLS& input);
+  // Copy constructor
+  Grid(const Grid& _grid);
+  // Assignement operator
+  Grid& operator=(const Grid& _grid);
   
 private:
   // Helper to get the line indices

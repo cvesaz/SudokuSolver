@@ -36,6 +36,24 @@ Grid::Grid(const FILLED_CELLS& input) {
   if (isValid) print();
 }
 
+// Copy constructor
+// _grid: input grid to copy
+Grid::Grid(const Grid& _grid) {
+  *this = _grid;
+}
+
+// Assignement operator
+// _grid: input grid to copy
+Grid& Grid::operator=(const Grid& _grid) {
+  for (INDEX i = 0; i<NN; ++i) {
+    data[i] = _grid.data[i];
+  }
+  remainingCells = _grid.remainingCells;
+  solvedCells = _grid.solvedCells;
+  isValid = _grid.isValid;
+  return *this;
+}
+
 // Helper to get the line indices
 // index: Current cell index
 // return: List of all cell indices on the current line
@@ -207,6 +225,7 @@ void Grid::setSolvedCell(const INDEX& index, const DIGIT& value) {
     assert(false);
   }
   clean(index, value);
+  isValid = std::min(isValid, check(index, value));
 }
 
 // Solve unique value in neighboring indices
@@ -422,14 +441,30 @@ bool Grid::linkedCells() {
 }
 
 // Solve Human Style
-// TODO add recursion 
 void Grid::solveHumanStyle() {
   if (!isValid) return;
+  // REMARK force to stop after founding the first solution
   while (countRemaining()>0) {
+    // Solvers which set a single cell
     if (last()) continue;
+    if (!isValid) return;
     if (unique()) continue;
+    if (!isValid) return;
+    // Solvers which clean some cells data
     if (linkedSquares()) continue;
     if (linkedCells()) continue;
+    // Recursion
+    auto initialGrid = Grid(*this);
+    for (const auto& cell : initialGrid.remainingCells) {
+      auto initialCellData = data[cell];
+      for (const auto& value : initialCellData) {
+        setSolvedCell(cell, value);
+        solveHumanStyle();
+        // REMARK force to stop after founding the first solution
+        if (remainingCells.size()==0) return;
+        *this = initialGrid;
+      }
+    }
     break;
   }
 }
@@ -444,6 +479,7 @@ void Grid::solveBrutForce() {
           auto cellData = data[cell];
           data[cell] = {value};
           solveBrutForce();
+          // REMARK force to stop after founding the first solution
           if (remainingCells.size()==0) return;
           data[cell] = cellData;
         }
@@ -451,5 +487,6 @@ void Grid::solveBrutForce() {
       return;
     }
   }
-  remainingCells.clear(); // REMARK force to stop after founding the first solution
+  // REMARK force to stop after founding the first solution
+  remainingCells.clear();
 }
