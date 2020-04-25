@@ -23,7 +23,7 @@ int main(int argc, const char * argv[]) {
   std::cout << "Solution Brut Force: " << std::endl;
   grid.check();
   grid.print();
-  std::cout << "Solve time Brut Force: " << (float)solveTime.count()/1e6 << " [seconds]" << std::endl << std::endl;
+  std::cout << "Solve time Brut Force: " << (float)solveTime.count()/1e6 << " [seconds]" << std::endl << std::endl; //About 0.49s
   
   grid = Grid(level);
   start = std::chrono::high_resolution_clock::now();
@@ -34,7 +34,7 @@ int main(int argc, const char * argv[]) {
   std::cout << "Solution Human Style: " << std::endl;
   grid.check();
   grid.print();
-  std::cout << "Solve time Human Style: " << (float)solveTime.count()/1e6 << " [seconds]" << std::endl << std::endl;
+  std::cout << "Solve time Human Style: " << (float)solveTime.count()/1e6 << " [seconds]" << std::endl << std::endl; //About 0.048s
   
   return 0;
 }

@@ -19,6 +19,11 @@ Grid::Grid(const FILLED_CELLS& input) {
     data[i] = emptyCell;
     remainingCells.insert(i);
   }
+  for (INDEX i = 0; i<N; ++i) {
+    remainingLines[i] = getLineIndicesFromLine(i);
+    remainingColumns[i] = getColumnIndicesFromColumn(i);
+    remainingSquares[i] = getSquareIndicesFromSquare(i);
+  }
   // Update input
   for (const auto& cell : input) {
     auto index = cell.first;
@@ -29,6 +34,25 @@ Grid::Grid(const FILLED_CELLS& input) {
       remainingCells.erase(it);
       solvedCells.insert(index);
     }
+    else assert(false);
+    auto& rl = remainingLines[getLineIndexFromCell(index)];
+    auto it_l = std::find(rl.begin(), rl.end(), index);
+    if (it_l!=rl.end()) {
+      rl.erase(it_l);
+    }
+    else assert(false);
+    auto& rc = remainingColumns[getColumnIndexFromCell(index)];
+    auto it_c = std::find(rc.begin(), rc.end(), index);
+    if (it_c!=rc.end()) {
+      rc.erase(it_c);
+    }
+    else assert(false);
+    auto& rs = remainingSquares[getSquareIndexFromCell(index)];
+    auto it_s = std::find(rs.begin(), rs.end(), index);
+    if (it_s!=rs.end()) {
+      rs.erase(it_s);
+    }
+    else assert(false);
   }
   // Check data
   clean();
@@ -50,16 +74,26 @@ Grid& Grid::operator=(const Grid& _grid) {
   }
   remainingCells = _grid.remainingCells;
   solvedCells = _grid.solvedCells;
+  for (INDEX i = 0; i<N; ++i) {
+    remainingLines[i] = _grid.remainingLines[i];
+    remainingColumns[i] = _grid.remainingColumns[i];
+    remainingSquares[i] = _grid.remainingSquares[i];
+  }
   isValid = _grid.isValid;
   return *this;
 }
 
 // Helper to get the line indices
-// index: Current cell index
+// cell: Current cell index
 // return: List of all cell indices on the current line
-INDICES Grid::getLineIndices(const INDEX& index) {
+INDICES Grid::getLineIndicesFromCell(const INDEX& cell) {
+  return getLineIndicesFromLine(getLineIndexFromCell(cell));
+}
+INDEX Grid::getLineIndexFromCell(const INDEX& cell) {
+  return cell / 9;
+}
+INDICES Grid::getLineIndicesFromLine(const INDEX& shift) {
   INDICES line = {0,1,2,3,4,5,6,7,8};
-  int shift = index / 9;
   for (auto& ind : line) {
     ind += 9*shift;
   }
@@ -67,11 +101,16 @@ INDICES Grid::getLineIndices(const INDEX& index) {
 }
 
 // Helper to get the column indices
-// index: Current cell index
+// cell: Current cell index
 // return: List of all cell indices on the current column
-INDICES Grid::getColumnIndices(const INDEX& index) {
+INDICES Grid::getColumnIndicesFromCell(const INDEX& cell) {
+  return getColumnIndicesFromColumn(getColumnIndexFromCell(cell));
+}
+INDEX Grid::getColumnIndexFromCell(const INDEX& cell) {
+  return cell % 9;
+}
+INDICES Grid::getColumnIndicesFromColumn(const INDEX& shift) {
   INDICES column = {0,9,18,27,36,45,54,63,72};
-  auto shift = index % 9;
   for (auto& ind : column) {
     ind += shift;
   }
@@ -79,11 +118,17 @@ INDICES Grid::getColumnIndices(const INDEX& index) {
 }
 
 // Helper to get the square indices
-// index: Current cell index
+// cell: Current cell index
 // return: List of all cell indices on the current square
-INDICES Grid::getSquareIndices(const INDEX& index) {
+INDICES Grid::getSquareIndicesFromCell(const INDEX& cell) {
+  return getSquareIndicesFromSquare(getSquareIndexFromCell(cell));
+}
+INDEX Grid::getSquareIndexFromCell(const INDEX& cell) {
+  return ((cell % 9)/3) + 3*((cell / 9)/3);
+}
+INDICES Grid::getSquareIndicesFromSquare(const INDEX& index) {
+  auto shift = 3*(index%3) + 27*(index/3);
   INDICES square = {0,1,2,9,10,11,18,19,20};
-  auto shift = 3*((index % 9)/3) + 27*((index / 9)/3);
   for (auto& ind : square) {
     ind += shift;
   }
@@ -135,9 +180,9 @@ std::vector<INDICES> Grid::getIndicesPermSizeKinN(const int& k, const int& n) {
 // index: Current cell index
 // value: Digit to be removed from cells data
 void Grid::clean(const INDEX& index, const DIGIT& value) {
-  auto lineIndices = getLineIndices(index);
-  auto columnIndices = getColumnIndices(index);
-  auto squareIndices = getSquareIndices(index);
+  auto lineIndices = getLineIndicesFromCell(index);
+  auto columnIndices = getColumnIndicesFromCell(index);
+  auto squareIndices = getSquareIndicesFromCell(index);
   SET_INDICES indices;
   indices.insert(lineIndices.begin(), lineIndices.end());
   indices.insert(columnIndices.begin(), columnIndices.end());
@@ -205,9 +250,9 @@ bool Grid::check(const INDEX& index, const DIGIT& value, const INDICES& indices)
 // value: Digit to check
 // return: Boolean success
 bool Grid::check(const INDEX& index, const DIGIT& value) {
-  if (!check(index,value,getLineIndices(index))) return false;
-  if (!check(index,value,getColumnIndices(index))) return false;
-  if (!check(index,value,getSquareIndices(index))) return false;
+  if (!check(index,value,getLineIndicesFromCell(index))) return false;
+  if (!check(index,value,getColumnIndicesFromCell(index))) return false;
+  if (!check(index,value,getSquareIndicesFromCell(index))) return false;
   return true;
 }
 
@@ -221,9 +266,25 @@ void Grid::setSolvedCell(const INDEX& index, const DIGIT& value) {
     remainingCells.erase(it);
     solvedCells.insert(index);
   }
-  else {
-    assert(false);
+  else assert(false);
+  auto& rl = remainingLines[getLineIndexFromCell(index)];
+  auto it_l = std::find(rl.begin(), rl.end(), index);
+  if (it_l!=rl.end()) {
+    rl.erase(it_l);
   }
+  else assert(false);
+  auto& rc = remainingColumns[getColumnIndexFromCell(index)];
+  auto it_c = std::find(rc.begin(), rc.end(), index);
+  if (it_c!=rc.end()) {
+    rc.erase(it_c);
+  }
+  else assert(false);
+  auto& rs = remainingSquares[getSquareIndexFromCell(index)];
+  auto it_s = std::find(rs.begin(), rs.end(), index);
+  if (it_s!=rs.end()) {
+    rs.erase(it_s);
+  }
+  else assert(false);
   clean(index, value);
   isValid = std::min(isValid, check(index, value));
 }
@@ -304,15 +365,9 @@ bool Grid::linkedSquares(const INDICES& squareIndices, const INDICES& indices) {
 }
 
 // Solve linked cells in neighboring indices
-// indices: Indices of neighboring cell, including current cell
+// remainingIndices: Indices of remaining cell
 // return: Found a linked cells that need to be cleaned
-bool Grid::linkedCells(const INDICES& indices) {
-  INDICES remainingIndices;
-  remainingIndices.reserve(N);
-  for (INDEX i = 0; i < N; ++i) {
-    auto cell = indices[i];
-    if (data[cell].size()>1) remainingIndices.push_back(cell);
-  }
+bool Grid::linkedCells(const INDICES& remainingIndices) {
   auto nr = (int)remainingIndices.size();
   auto checkLinkedPerm = [&] (INDICES cellPerm, INDICES cellPermCompl) -> bool {
     SET_DIGITS valuesInCellPerm;
@@ -409,9 +464,9 @@ bool Grid::last() {
 bool Grid::unique() {
   for (const auto cell : remainingCells) {
     for (const auto value : data[cell]) {
-      if (unique(cell,value,getLineIndices(cell))) return true;
-      if (unique(cell,value,getColumnIndices(cell))) return true;
-      if (unique(cell,value,getSquareIndices(cell))) return true;
+      if (unique(cell,value,getLineIndicesFromCell(cell))) return true;
+      if (unique(cell,value,getColumnIndicesFromCell(cell))) return true;
+      if (unique(cell,value,getSquareIndicesFromCell(cell))) return true;
     }
   }
   return false;
@@ -419,23 +474,31 @@ bool Grid::unique() {
 
 // Solve linked squares
 // return: Found a linked square that need to be cleaned
-// TODO optimize me using loop over lines, columns and cells instead of remainingCells
 bool Grid::linkedSquares() {
   for (const auto cell : remainingCells) {
-    if (linkedSquares(getSquareIndices(cell),getLineIndices(cell))) return true;
-    if (linkedSquares(getSquareIndices(cell),getColumnIndices(cell))) return true;
+    if (linkedSquares(getSquareIndicesFromCell(cell),getLineIndicesFromCell(cell))) return true;
+    if (linkedSquares(getSquareIndicesFromCell(cell),getColumnIndicesFromCell(cell))) return true;
   }
   return false;
 }
 
 // Solve linked cells per lines, columns, squares
 // return: Found a linked cells that need to be cleaned
-// TODO optimize me using loop over lines, columns and cells instead of remainingCells
 bool Grid::linkedCells() {
-  for (const auto cell : remainingCells) {
-    if (linkedCells(getLineIndices(cell))) return true;
-    if (linkedCells(getColumnIndices(cell))) return true;
-    if (linkedCells(getSquareIndices(cell))) return true;
+  for (const auto& remainingline : remainingLines) {
+    if (remainingline.size()>2) {
+      if (linkedCells(remainingline)) return true;
+    }
+  }
+  for (const auto& remainingColumn : remainingColumns) {
+    if (remainingColumn.size()>2) {
+      if (linkedCells(remainingColumn)) return true;
+    }
+  }
+  for (const auto& remainingSquare : remainingSquares) {
+    if (remainingSquare.size()>2) {
+      if (linkedCells(remainingSquare)) return true;
+    }
   }
   return false;
 }

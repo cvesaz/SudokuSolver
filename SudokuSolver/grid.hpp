@@ -36,6 +36,12 @@ private:
   SET_INDICES remainingCells;
   // Solved cell indices;
   SET_INDICES solvedCells;
+  // Remaing line indices
+  INDICES remainingLines[N];
+  // Remaing column indices
+  INDICES remainingColumns[N];
+  // Remaing squares indices
+  INDICES remainingSquares[N];
   // Is valid
   bool isValid;
   
@@ -49,11 +55,17 @@ public:
   
 private:
   // Helper to get the line indices
-  INDICES getLineIndices(const INDEX& index);
+  INDICES getLineIndicesFromCell(const INDEX& cell);
+  INDEX   getLineIndexFromCell(const INDEX& cell);
+  INDICES getLineIndicesFromLine(const INDEX& shift);
   // Helper to get the column indices
-  INDICES getColumnIndices(const INDEX& index);
+  INDICES getColumnIndicesFromCell(const INDEX& cell);
+  INDEX   getColumnIndexFromCell(const INDEX& cell);
+  INDICES getColumnIndicesFromColumn(const INDEX& shift);
   // Helper to get the square indices
-  INDICES getSquareIndices(const INDEX& index);
+  INDICES getSquareIndicesFromCell(const INDEX& cell);
+  INDEX   getSquareIndexFromCell(const INDEX& cell);
+  INDICES getSquareIndicesFromSquare(const INDEX& shift);
   // Helper to get factorial of n
   int factorial(const int& n);
   // Helper to get indices permutations
@@ -75,7 +87,7 @@ private:
   // Solve linked squares with neighboring indices
   bool linkedSquares(const INDICES& squareIndices, const INDICES& indices);
   // Solve linked cells in neighboring indices
-  bool linkedCells(const INDICES& indices);
+  bool linkedCells(const INDICES& remainingIndices);
   
 public:
   // Print grid to terminal
